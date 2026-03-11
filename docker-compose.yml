@@ -1,0 +1,86 @@
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${IRIS_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
+      MYSQL_USER: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
+      MYSQL_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
+      MYSQL_HOST: mysql
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - application
+      - storage
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
+    networks:
+      - application
+      - storage
+
+  migrator:
+    build: .
+    image: iris-rails-migrator
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
+    command: bash -c "sleep 10 && bundle exec rails db:create && bundle exec rails db:migrate"
+    networks:
+      - storage
+      - application
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:rw
+    networks:
+      - public
+      - application
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+
+
+volumes:
+  mysql_data:
+  grafana-data:
+
+networks:
+  public:
+  application:
+  monitoring:
+  storage:

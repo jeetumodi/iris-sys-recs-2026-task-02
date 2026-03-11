@@ -13,20 +13,20 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: root
-  password: Gukesh12garry@
-  socket: /var/run/mysqld/mysqld.sock
+  username: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME"] %>
+  password: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD"] %>
+  host: mysql
 
 development:
   <<: *default
-  database: iris_systems_rec_task_development
+  database: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_NAME"] %>
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: iris_systems_rec_task_test
+  database: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_NAME"] %>
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -51,5 +51,5 @@ test:
 production:
   <<: *default
   database: iris_systems_rec_task_production
-  username: iris_systems_rec_task
+  username: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME"] %>
   password: <%= ENV["IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD"] %>
