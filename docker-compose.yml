@@ -9,12 +9,12 @@ services:
       MYSQL_DATABASE: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
       MYSQL_USER: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       MYSQL_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
-      MYSQL_HOST: mysql
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - application
       - storage
+      - monitoring
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -30,6 +30,7 @@ services:
       IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
       IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_HOST: ${IRIS_SYSTEMS_REC_TASK_DATABASE_HOST}
     networks:
       - application
       - storage
@@ -44,10 +45,12 @@ services:
       IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
       IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_HOST: ${IRIS_SYSTEMS_REC_TASK_DATABASE_HOST}
     command: bash -c "sleep 10 && bundle exec rails db:create && bundle exec rails db:migrate"
     networks:
       - storage
       - application
+
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -66,11 +69,50 @@ services:
     image: grafana/grafana:latest
     container_name: grafana
     restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRFANA_ADMIN_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - monitoring
+
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    networks:
+      - monitoring
+
+  mysql-exporter:
+    image: prom/mysqld-exporter:latest
+    container_name: mysql-exporter
+    volumes:
+      - ./mysqld_exporter.cnf:/etc/.mysqld_exporter.cnf:ro
+    command:
+      - "--config.my-cnf=/etc/.mysqld_exporter.cnf"
+    depends_on:
+      - mysql
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: unless-stopped
     networks:
       - monitoring
 

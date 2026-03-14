@@ -32,3 +32,6 @@
 
 # env filies
 .env
+
+# config files
+mysqld_exporter.cnf
