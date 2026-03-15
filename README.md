@@ -16,7 +16,7 @@
 
     - Fix: Implemented sticky sessions, so each client IP is consistently routed to the same server. If that server goes down, the requests from that IP are automatically redirected to another available server.
 
-## Network structure
+## My Network structure
 
 ![Network struture](screenshots/network.png)
 - `public` : This networks allows the nginx to compunicate with the outside.
