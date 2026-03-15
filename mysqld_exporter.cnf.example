@@ -1,5 +1,5 @@
 [client]
 user=exporter-username
 password=exporter-password
-host=your_database_host
+host=msql
 port=3306

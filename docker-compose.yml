@@ -9,6 +9,7 @@ services:
       MYSQL_DATABASE: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
       MYSQL_USER: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       MYSQL_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
+
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -34,6 +35,9 @@ services:
     networks:
       - application
       - storage
+    restart: unless-stopped
+    deploy:
+      replicas: 3
 
   migrator:
     build: .
