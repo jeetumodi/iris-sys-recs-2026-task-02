@@ -22,6 +22,16 @@ services:
       retries: 5
       start_period: 30s
 
+  nfs-server:
+    image: itsthenetwork/nfs-server-alpine:latest
+    container_name: nfs-server
+    restart: unless-stopped
+    environment:
+      SHARED_DIRECTORY: /exports
+    volumes:
+      - nfs_data:/exports
+    networks:
+      - storage
   app:
     build: .
     depends_on:
@@ -36,8 +46,10 @@ services:
       - application
       - storage
     restart: unless-stopped
-    deploy:
-      replicas: 3
+    volumes:
+      - type: volume
+        source: shared_data
+        target: /app/storage
 
   migrator:
     build: .
@@ -124,6 +136,13 @@ services:
 volumes:
   mysql_data:
   grafana-data:
+  nfs_data:
+  shared_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=nfs-server,rw,nolock,soft
+      device: ":/exports"
 
 networks:
   public:
