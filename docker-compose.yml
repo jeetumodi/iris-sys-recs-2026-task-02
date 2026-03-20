@@ -153,10 +153,10 @@ volumes:
   grafana-data:
   shared_data:
     driver: local
-    driver_opts:
-      type: nfs
-      o: addr=nfs-server,rw,nolock,soft
-      device: ":/exports"
+    # driver_opts:
+    #   type: nfs
+    #   o: addr=nfs-server,rw,nolock,soft
+    #   device: ":/exports"
 
 networks:
   public:
