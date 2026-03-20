@@ -49,7 +49,7 @@ FLUSH PRIVILEGES;
 ![connection test](screenshots/connection-test.png)
 ---
 - create a file in one container it should replicat in all three
-![create tmp file in one container and test](screenshots\create-one-tmp.png)
+![create tmp file in one container and test](screenshots/create-one-tmp.png)
 - Proof that it does in all the 3
 ![proof](screenshots/persistence%20proof.png)
 ---
@@ -84,13 +84,13 @@ FLUSH PRIVILEGES;
 
 ### 5. IRIS Share App - 1
 
-![iris share no posts](screenshots/app-1.png)
+![iris share 1](screenshots/app-1.png)
 
 ---
 
 ### 6. IRIS Share App - 2
 
-![iris share signed in](screenshots/app2.png)
+![iris share 2](screenshots/app-2.png)
 
 
 ## Notes
