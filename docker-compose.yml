@@ -1,5 +1,6 @@
 services:
 
+  # MySQL database service
   mysql:
     image: mysql:8.0
     container_name: mysql
@@ -9,29 +10,33 @@ services:
       MYSQL_DATABASE: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
       MYSQL_USER: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       MYSQL_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
-
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - application
       - storage
       - monitoring
+    # Healthcheck to ensure MySQL is ready before dependent services start
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
       start_period: 30s
 
+  # NFS server for shared storage
   nfs-server:
     image: itsthenetwork/nfs-server-alpine:latest
     container_name: nfs-server
+    privileged: true
     restart: unless-stopped
     environment:
       SHARED_DIRECTORY: /exports
     volumes:
-      - nfs_data:/exports
+      - shared_data:/exports
     networks:
       - storage
+
+  # Application service
   app:
     build: .
     depends_on:
@@ -42,6 +47,7 @@ services:
       IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
       IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
       IRIS_SYSTEMS_REC_TASK_DATABASE_HOST: ${IRIS_SYSTEMS_REC_TASK_DATABASE_HOST}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
     networks:
       - application
       - storage
@@ -51,6 +57,8 @@ services:
         source: shared_data
         target: /app/storage
 
+  # Database migrator service so that we can run migrations before the app starts and ensure the database is ready before the app starts. 
+  # And also to avoid running migrations every time the app container restarts/starts.
   migrator:
     build: .
     image: iris-rails-migrator
@@ -62,11 +70,13 @@ services:
       IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
       IRIS_SYSTEMS_REC_TASK_DATABASE_NAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_NAME}
       IRIS_SYSTEMS_REC_TASK_DATABASE_HOST: ${IRIS_SYSTEMS_REC_TASK_DATABASE_HOST}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
     command: bash -c "sleep 10 && bundle exec rails db:create && bundle exec rails db:migrate"
     networks:
       - storage
       - application
 
+  # Nginx service to serve the app and other services(like prometheus and grafana)
   nginx:
     image: nginx:latest
     container_name: nginx
@@ -75,12 +85,14 @@ services:
       - "80:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:rw
+      # For basic authentication for prometheus and grafana
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro 
     networks:
       - public
       - application
       - monitoring
 
+  # Monitoring services
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -90,7 +102,7 @@ services:
     networks:
       - monitoring
 
-  
+  # Prometheus service to scrape metrics from various services
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -100,6 +112,7 @@ services:
     networks:
       - monitoring
 
+  # cadvisor to scrape container metrics and provide them to prometheus
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -113,11 +126,13 @@ services:
     networks:
       - monitoring
 
+  # MySQL exporter to scrape MySQL metrics and provide them to prometheus
   mysql-exporter:
     image: prom/mysqld-exporter:latest
     container_name: mysql-exporter
     volumes:
-      - ./mysqld_exporter.cnf:/etc/.mysqld_exporter.cnf:ro
+    # MySQL configuration files for the exporter to connect to MySQL and scrape metrics
+      - ./mysqld_exporter.cnf:/etc/.mysqld_exporter.cnf:ro 
     command:
       - "--config.my-cnf=/etc/.mysqld_exporter.cnf"
     depends_on:
@@ -125,6 +140,7 @@ services:
     networks:
       - monitoring
 
+  # Node exporter to scrape host metrics and provide them to prometheus
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node_exporter
@@ -132,11 +148,9 @@ services:
     networks:
       - monitoring
 
-
 volumes:
   mysql_data:
   grafana-data:
-  nfs_data:
   shared_data:
     driver: local
     driver_opts:
