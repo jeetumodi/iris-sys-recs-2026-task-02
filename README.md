@@ -69,7 +69,7 @@ FLUSH PRIVILEGES;
 
 ### 3. Prometheus Targets
 
-![prometheus targets](screenshots/prom-targets.png)
+![prometheus targets](screenshots/prom-tragets.png)
 
 ---
 
