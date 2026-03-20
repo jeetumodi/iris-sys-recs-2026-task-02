@@ -143,8 +143,18 @@ services:
   # Node exporter to scrape host metrics and provide them to prometheus
   node-exporter:
     image: prom/node-exporter:latest
-    container_name: node_exporter
+    container_name: node-exporter
     restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Nginx exporter to scrape nginx metrics and provide them to prometheus
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    restart: unless-stopped
+    ports:
+      - "9113:9113"
     networks:
       - monitoring
 
