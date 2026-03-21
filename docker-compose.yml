@@ -65,6 +65,7 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    restart: on-failure
     environment:
       IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME: ${IRIS_SYSTEMS_REC_TASK_DATABASE_USERNAME}
       IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD: ${IRIS_SYSTEMS_REC_TASK_DATABASE_PASSWORD}
@@ -160,8 +161,26 @@ services:
     networks:
       - monitoring
 
+  # backup service for backup
+  backup:
+    build: ./backup
+    container_name: backup
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    environment:
+      IRIS_ROOT_PASSWORD: ${IRIS_ROOT_PASSWORD}
+      IRIS_SYSTEMS_REC_TASK_DATABASE_HOST: ${IRIS_SYSTEMS_REC_TASK_DATABASE_HOST}
+    volumes:
+      - shared_data:/app/storage:ro
+      - backup-data:/backups/
+    networks:
+      - storage
+
 volumes:
   mysql_data:
+  backup-data:
   grafana-data:
   shared_data:
     driver: local
