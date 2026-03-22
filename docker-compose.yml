@@ -51,6 +51,7 @@ services:
     networks:
       - application
       - storage
+      - monitoring
     restart: unless-stopped
     volumes:
       - type: volume

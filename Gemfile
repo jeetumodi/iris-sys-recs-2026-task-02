@@ -34,6 +34,9 @@ gem "jbuilder"
 # Use Redis adapter to run Action Cable in production
 # gem "redis", "~> 4.0"
 
+# prometheus-client for metrics collection [https://github.com/prometheus/client_ruby]
+gem "prometheus-client"
+
 # Use Kredis to get higher-level data types in Redis [https://github.com/rails/kredis]
 # gem "kredis"
 
