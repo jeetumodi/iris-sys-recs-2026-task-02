@@ -58,7 +58,7 @@ FLUSH PRIVILEGES;
 
 - All Metrics that are beingin scraped
 
-![grafana metrics drilldown](screenshots/grafana-o.png)
+![grafana metrics drilldown](screenshots/grafana-0.png)
 
 ![grafana cadvisor](screenshots/grafana-1.png)
 
