@@ -1,4 +1,4 @@
-# TASK 02 NFS-server setup/ data persistence
+# TASK 03 Monitoring stack
 
 ## Project Overview
 
